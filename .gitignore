@@ -1,0 +1,16 @@
+# Build output
+build/
+
+# Compiled binaries (produced by build.sh / swiftc)
+lastcall
+Icon/mask
+
+# Icon intermediates — regenerate from Icon/Quit_Icon.png, see README
+Icon/AppIcon.iconset/
+Icon/icon-1024.png
+Icon/icon-alpha.png
+
+.DS_Store
+
+# Stale artifact from the pre-rename build
+quitonclose
