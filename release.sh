@@ -12,7 +12,9 @@ cd "$(dirname "$0")"
 VERSION="${1:?usage: ./release.sh <version>   e.g. ./release.sh 1.1.0}"
 APP="build/LastCall.app"
 DMG_DIR="build/dmg"
-DMG="build/LastCall-${VERSION}.dmg"
+# Versionless on purpose: releases/latest/download/LastCall.dmg then always
+# resolves, so the README link never needs editing for a new release.
+DMG="build/LastCall.dmg"
 
 echo "==> building the app"
 swiftc -O -o lastcall Sources/*.swift

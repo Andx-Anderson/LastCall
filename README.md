@@ -33,7 +33,7 @@ leaving one open on another Space — so it never quits an app you're still usin
 
 ### Download
 
-<a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall-1.1.0.dmg"><img src="https://img.shields.io/badge/Download%20for-macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
+<a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall.dmg"><img src="https://img.shields.io/badge/Download%20for-macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
 
 Open the `.dmg` and drag **Last Call** to your `/Applications` folder.
 
