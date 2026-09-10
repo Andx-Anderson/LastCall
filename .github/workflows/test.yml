@@ -1,0 +1,31 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  decision-tests:
+    name: Decision tests
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Swift version
+        run: swift --version
+
+      # test.sh compiles only Decision.swift and the test file — no AppKit, no
+      # running app, no Accessibility permission — so it works on a CI runner.
+      - name: Run tests
+        run: ./test.sh
+
+  build:
+    name: Build app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile
+        run: swiftc -O -o lastcall Sources/*.swift

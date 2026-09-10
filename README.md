@@ -7,6 +7,7 @@
 **Close the last window, the app quits. Like Windows.**
 
 <p>
+<a href="https://github.com/Andx-Anderson/LastCall/actions/workflows/test.yml"><img src="https://github.com/Andx-Anderson/LastCall/actions/workflows/test.yml/badge.svg" alt="Tests"></a>
 <img src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white" alt="macOS 14+">
 <img src="https://img.shields.io/badge/Swift-6.3-F05138?logo=swift&logoColor=white" alt="Swift 6.3">
 <a href="https://github.com/Andx-Anderson/LastCall/releases/latest"><img src="https://img.shields.io/github/v/release/Andx-Anderson/LastCall?color=brightgreen" alt="Latest release"></a>
@@ -30,25 +31,44 @@ leaving one open on another Space — so it never quits an app you're still usin
 
 ## Install
 
+### Download
+
+<a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall-1.1.0.dmg"><img src="https://img.shields.io/badge/Download%20for-macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
+
+Open the `.dmg` and drag **Last Call** to your `/Applications` folder.
+
+> [!IMPORTANT]
+> There's no Apple Developer account behind this yet, so macOS will tell you Last Call is from an
+> unidentified developer and refuse to open it. That's expected. You only need to clear it once:
+>
+> ```sh
+> xattr -dr com.apple.quarantine /Applications/LastCall.app
+> ```
+>
+> Then open it normally. This is the reliable method — right-click → Open works sometimes, and not
+> at all for non-admin users.
+>
+> If you'd rather not run a command against a binary you can't verify, build it from source below.
+> That's the honest reason this warning exists: nothing has vouched for the download except me.
+
+### Or build it yourself
+
 ```sh
 git clone https://github.com/Andx-Anderson/LastCall.git
 cd LastCall
 ./build.sh
 ```
 
-That compiles it, installs it to `/Applications`, and launches it.
+Compiles it, installs it to `/Applications`, and launches it. No quarantine flag to clear, because
+nothing was downloaded.
+
+### Then grant permission
 
 > [!IMPORTANT]
-> Last Call needs **Accessibility** permission, and it will prompt you on first launch. It cannot see
-> which window you clicked without it, so nothing works until you tick the box.
+> Last Call needs **Accessibility** permission, and prompts you on first launch. It cannot see which
+> window you clicked without it, so nothing works until you tick the box.
 >
 > System Settings → Privacy & Security → Accessibility → **Last Call**
-
-> [!NOTE]
-> There's no download button here on purpose. The build is ad-hoc signed, so macOS would flag it as
-> coming from an unidentified developer — and an unsigned app asking for Accessibility, the
-> permission to read and control every other app, is shaped exactly like malware. Building it
-> yourself takes one command and you can read precisely what you're granting.
 
 ---
 
