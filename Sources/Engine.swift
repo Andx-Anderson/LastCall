@@ -126,13 +126,9 @@ final class Engine {
 
     // MARK: Decide
 
-    /// `after < before`           a window was destroyed  -> quit iff nothing remains
-    /// `after == before`, nothing on screen  hidden, not destroyed -> one of the listed
-    ///                            windows is the hidden one, so finished at 1
-    /// `after == before`, something on screen  the close did nothing -> leave it alone
-    ///
     /// Counts, never `CFEqual` identity: AXUIElement refs to one window are not
-    /// reliably equal across fetches (Discord's are not). See DESIGN.md.
+    /// reliably equal across fetches (Discord's are not). The rule itself is in
+    /// Decision.swift, kept pure so it can be unit tested.
     private func consider(pid: pid_t, before: Int, attempt: Int) {
         guard let app = NSRunningApplication(processIdentifier: pid), !app.isTerminated else { return }
         let bundleId = app.bundleIdentifier ?? ""
@@ -145,16 +141,7 @@ final class Engine {
         let after = realWindowCount(pid: pid)
         let onScreen = onScreenWindowCount(pid: pid)
 
-        let finished: Bool
-        if after < before {
-            finished = after == 0
-        } else if onScreen == 0 {
-            finished = after <= 1
-        } else {
-            finished = false
-        }
-
-        if finished {
+        if Decision.shouldQuit(before: before, after: after, onScreen: onScreen) {
             let name = app.localizedName ?? bundleId
             app.terminate()
             Prefs.shared.noteQuit(appName: name)

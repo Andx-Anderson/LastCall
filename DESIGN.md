@@ -25,9 +25,16 @@ Nothing times out of that, because nothing will ever change.
 
 | | |
 | :--- | :--- |
+| `before == 0` | Nothing to reason from. Do nothing. |
 | `after < before` | A window was destroyed. Quit iff `after == 0`. |
 | `after == before`, nothing on screen | Hidden, not destroyed. Quit iff `after <= 1`. |
 | `after == before`, something on screen | Do nothing. |
+
+The `before == 0` guard exists because the 100px floor filters every window of an app whose windows
+are all small, making the counts arrive as zeroes — and `0 <= 1` would otherwise read as "finished"
+and quit an app that still had windows open. Such an app now simply never auto-quits, which is the
+right way to fail. The rule lives in `Sources/Decision.swift` as a pure function; `./test.sh` covers
+it, including that regression.
 
 A trigger is only a hint; the decision comes from window state afterwards. So a false trigger is
 free — a Cmd+W that closed a browser tab leaves the window in place.

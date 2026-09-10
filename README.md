@@ -70,6 +70,18 @@ The menu bar icon dims when it's paused or when permission is missing.
 > remaining window is **minimized**, or **Finder**. When the answer is ambiguous it leaves the app
 > alone — the only thing it can do is quit something, so it errs toward doing nothing.
 
+### Tested
+
+| App | |
+| :--- | :--- |
+| Discord | quits — hides its window instead of closing it, the case other tools miss |
+| Spotify | quits — slow close animation, handled by re-checking |
+| ChatGPT | quits |
+| Safari | quits on the last window; closing a **tab** correctly does nothing |
+| Finder | never quit, by design |
+
+Apps with a window on another Space, or with a minimized window left, are left running.
+
 ---
 
 ## Privacy
@@ -83,13 +95,15 @@ keycode and modifier flags, to test for Cmd+W. Nothing is stored, logged, or sen
 
 | File | |
 | :--- | :--- |
-| `Sources/Engine.swift` | Detection and the quit decision |
+| `Sources/Engine.swift` | Event tap, triggers, window counting |
+| `Sources/Decision.swift` | The quit rule, kept pure so it can be tested |
 | `Sources/Prefs.swift` | Settings and the login item |
 | `Sources/SettingsView.swift` | Settings window |
 | `Sources/AppDelegate.swift` | Menu bar |
 | `Icon/mask.swift` | Regenerates the icon from the source art |
 
 `./build.sh` compiles, bundles, signs and installs to `/Applications`.
+`./test.sh` runs the decision tests — pure logic, so they need no running app and no permission.
 
 > [!WARNING]
 > Ad-hoc signing ties the Accessibility grant to the code hash, so **every rebuild silently voids
