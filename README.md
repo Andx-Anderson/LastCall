@@ -1,38 +1,56 @@
+<div align="center">
+
+<img src="Icon/icon.png" width="180" alt="Last Call">
+
 # Last Call
 
-Close an app's last window and the app quits, the way Windows does. No more apps idling in the Dock
-with nothing open.
+<p>
+<img src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white" alt="macOS 14+">
+<img src="https://img.shields.io/badge/Swift-6.3-F05138?logo=swift&logoColor=white" alt="Swift 6.3">
+<a href="https://github.com/Andx-Anderson/LastCall/releases/latest"><img src="https://img.shields.io/github/v/release/Andx-Anderson/LastCall?color=brightgreen" alt="Latest release"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
+</p>
 
-Works on **Discord** and other Electron apps, which similar tools don't — they hide their windows
-instead of closing them, so anything watching for a window to be destroyed never fires.
+</div>
 
-macOS 14+.
+Say hello to **Last Call**, the app that makes your Mac's red close button do what you actually
+expect. Close an app's last window and the app *quits* — no more half-dozen apps idling in your Dock
+with nothing open, no more reaching for Cmd+Q every single time.
+
+And it works on **Discord**, which tools like this quietly fail on. Discord doesn't close its window,
+it hides it, so anything waiting for a window to be destroyed waits forever. Last Call counts
+windows instead. It also knows the difference between closing a window and *minimizing* one, or
+leaving one open on another Space — so it never quits an app you're still using.
 
 ## Install
 
 ```sh
+git clone https://github.com/Andx-Anderson/LastCall.git
+cd LastCall
 ./build.sh
 ```
 
 Then grant Accessibility when prompted. It can't see which window you clicked without it.
 
+> No download here on purpose. The build is ad-hoc signed, so macOS would show "unidentified
+> developer" — and an unsigned app that asks for Accessibility looks exactly like malware. Build it
+> yourself and you can read precisely what you're granting.
+
 ## Use
 
-A menu bar icon and one settings window. Quitting happens when you close the last window with the
-**red button** or **Cmd+W**.
+A menu bar icon and one settings window. Apps quit when you close the last window with the **red
+button** or **Cmd+W**.
 
-Settings:
-
-| | |
+| Setting | |
 | :--- | :--- |
 | **Quit apps when the last window closes** | The main switch. |
 | **Open at login** | A real Login Item, revocable in System Settings → General → Login Items. |
 | **Never quit these apps** | Add any app with `+`. Finder is always excluded. |
 
-The menu bar icon dims when paused or when permission is missing.
+The icon dims when paused or when permission is missing.
 
-Things it deliberately won't do: quit an app with another window open on a different Space, quit an
-app whose only remaining window is minimized, or quit Finder.
+It deliberately won't quit an app with a window on another Space, one whose only remaining window is
+minimized, or Finder.
 
 ## Privacy
 
