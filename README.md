@@ -33,23 +33,46 @@ leaving one open on another Space — so it never quits an app you're still usin
 
 ### Download
 
-<a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall.dmg"><img src="https://img.shields.io/badge/Download%20for-macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS"></a>
+<a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall.dmg"><img src="Icon/download-macos.png" width="240" alt="Download app for macOS"></a>
 
-Open the `.dmg` and drag **Last Call** to your `/Applications` folder.
+Once downloaded, open the `.dmg` and move **Last Call** to your `/Applications` folder.
 
 > [!IMPORTANT]
-> There's no Apple Developer account behind this yet, so macOS will tell you Last Call is from an
-> unidentified developer and refuse to open it. That's expected. You only need to clear it once:
+> There's no Developer ID behind this build yet, so macOS will warn you that Last Call is from an
+> unidentified developer on first launch. This is expected behaviour.
 >
-> ```sh
-> xattr -dr com.apple.quarantine /Applications/LastCall.app
-> ```
->
-> Then open it normally. This is the reliable method — right-click → Open works sometimes, and not
-> at all for non-admin users.
->
-> If you'd rather not run a command against a binary you can't verify, build it from source below.
-> That's the honest reason this warning exists: nothing has vouched for the download except me.
+> You'll need to bypass it before the app will open. You only need to do this once. Use one of the
+> methods below.
+
+---
+
+**Recommended: Terminal (always works)**
+
+This is the quickest method. It's a single command and works for everyone, including non-admin
+users, which System Settings does not.
+
+After moving Last Call to your Applications folder, run:
+
+```sh
+xattr -dr com.apple.quarantine /Applications/LastCall.app
+```
+
+Then open the app normally.
+
+---
+
+**Alternative: System Settings**
+
+> [!NOTE]
+> This method doesn't work for all users. If it doesn't work, use the Terminal method above.
+
+1. Try to open the app — you'll see a security warning.
+2. Click **OK** to dismiss it.
+3. Open **System Settings** > **Privacy & Security**.
+4. Scroll to the bottom and click **Open Anyway** next to the Last Call warning.
+5. Confirm if prompted.
+
+---
 
 ### Or build it yourself
 
