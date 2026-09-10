@@ -7,15 +7,10 @@
 **Close the last window, the app quits. Like Windows.**
 
 <p>
-<img src="https://img.shields.io/badge/macOS-14%2B-000000?style=for-the-badge&logo=apple&logoColor=white" alt="macOS 14+">
-<img src="https://img.shields.io/badge/Swift-6.3-F05138?style=for-the-badge&logo=swift&logoColor=white" alt="Swift 6.3">
-<img src="https://img.shields.io/badge/Works%20on-Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Works on Discord">
-</p>
-
-<p>
-<a href="https://github.com/Andx-Anderson/LastCall/releases/latest"><img src="https://img.shields.io/github/v/release/Andx-Anderson/LastCall?color=3FB950&label=release" alt="Latest release"></a>
-<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1F6FEB" alt="MIT license"></a>
-<img src="https://img.shields.io/badge/menu%20bar-only-8957E5" alt="Menu bar only">
+<img src="https://img.shields.io/badge/macOS-14%2B-black?logo=apple&logoColor=white" alt="macOS 14+">
+<img src="https://img.shields.io/badge/Swift-6.3-F05138?logo=swift&logoColor=white" alt="Swift 6.3">
+<a href="https://github.com/Andx-Anderson/LastCall/releases/latest"><img src="https://img.shields.io/github/v/release/Andx-Anderson/LastCall?color=brightgreen" alt="Latest release"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT license"></a>
 </p>
 
 </div>
