@@ -1,9 +1,5 @@
 // The quit decision, kept pure so it can be tested without a running app.
-//
-// Inputs are all counts of "real" windows (see minWindowSide in Engine.swift):
-//   before    the app's window count when the user triggered a close
-//   after     its window count once things settled
-//   onScreen  how many of its windows the window server is currently showing
+// All three inputs are counts of "real" windows — see minWindowSide in Engine.swift.
 
 enum Decision {
 

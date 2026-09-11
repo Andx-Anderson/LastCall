@@ -56,7 +56,8 @@ button** or **Cmd+W**.
 | Setting | What it does |
 | :--- | :--- |
 | **Quit apps when the last window closes** | The main switch. |
-| **Open at login** | Starts Last Call automatically. Revocable in System Settings → General → Login Items. |
+| **Open at login** | On by default, so it still works after a reboot. Revocable in System Settings → General → Login Items. |
+| **Quit delay** | A grace period before quitting, up to 5s. Reopen a window during it and the app is left alone. Instant by default. |
 | **Never quit these apps** | Apps to leave alone. Finder is here by default — remove it if you want Finder to quit too. |
 
 The menu bar icon dims when it's paused or missing permission, and the settings window tells you

@@ -6,10 +6,6 @@
 import Cocoa
 import ApplicationServices
 
-/// Finder used to be hard-excluded. It is now just a default entry in the user's
-/// exclusion list, because quitting Finder is a legitimate thing to want — macOS
-/// relaunches it — and a tool should not override a deliberate choice.
-
 final class Engine {
     static let shared = Engine()
 
@@ -69,13 +65,9 @@ final class Engine {
         isRunning = false
     }
 
-    /// The honest answer to "can this app actually do its job right now".
-    ///
-    /// Neither obvious signal works. `AXIsProcessTrusted()` caches inside a running
-    /// process and keeps returning true after the grant is pulled; `CGEvent.tapIsEnabled`
-    /// also still reports true while the tap silently delivers nothing. Measured both,
-    /// 2026-09-11. The only reliable test is to make a real Accessibility call and see
-    /// whether it is refused.
+    /// Neither obvious signal survives a revoked grant: `AXIsProcessTrusted()` caches
+    /// inside a running process and `CGEvent.tapIsEnabled` stays true while the tap
+    /// delivers nothing. Both measured. Only a real AX call tells the truth.
     var hasPermission: Bool {
         guard AXIsProcessTrusted() else { return false }
         var value: CFTypeRef?
@@ -119,7 +111,6 @@ final class Engine {
         }
     }
 
-    /// Snapshot the window count at trigger time; the decision compares against it.
     private func schedule(pid: pid_t) {
         let before = realWindowCount(pid: pid)
         DispatchQueue.main.asyncAfter(deadline: .now() + checkDelays[0]) { [weak self] in
@@ -127,7 +118,6 @@ final class Engine {
         }
     }
 
-    /// Was that click on a window's red close button? If so, whose?
     private func closeButtonPid(at point: CGPoint) -> pid_t? {
         var element: AXUIElement?
         guard AXUIElementCopyElementAtPosition(systemWide,
@@ -171,9 +161,8 @@ final class Engine {
         }
     }
 
-    /// Waits out the user's grace period, then checks once more that the app really
-    /// still has nothing open — reopening a window during the delay cancels the quit,
-    /// which is the entire point of having one.
+    /// Re-checks after the grace period: reopening a window during it cancels the
+    /// quit, which is the entire point of having one.
     private func quit(_ app: NSRunningApplication, bundleId: String, windowsAtDecision: Int) {
         let name = app.localizedName ?? bundleId
         let delay = Prefs.shared.quitDelay

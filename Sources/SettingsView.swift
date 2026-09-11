@@ -60,8 +60,8 @@ struct SettingsView: View {
 
     // MARK: Permission
     //
-    // Shown in both states, not just when missing. A row that appears only on failure
-    // gives you no way to tell "granted" from "the app forgot to check".
+    // Shown in both states: a row that appears only on failure gives you no way to
+    // tell "granted" from "the app forgot to check".
 
     private var permissionRow: some View {
         VStack(alignment: .leading, spacing: 10) {

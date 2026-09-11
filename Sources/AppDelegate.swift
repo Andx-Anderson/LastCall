@@ -31,14 +31,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Revoking Accessibility does not stop the app or say anything, it just makes it
-    /// silently useless — which is the exact failure this app was written to avoid
-    /// being on the receiving end of. So say so, once, the moment it happens.
+    /// Revoking Accessibility does not stop the app or say anything — it just makes it
+    /// silently useless. So say so, once, the moment it happens.
     private var wasTrusted = false
 
     private func checkPermissionLoss() {
-        // Trust the tap, not AXIsProcessTrusted(). If we were running and the tap has
-        // gone dead without us stopping it, the grant was taken away.
         let now = Engine.shared.hasPermission
         defer { wasTrusted = now }
         guard wasTrusted, !now else { return }

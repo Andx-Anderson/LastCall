@@ -1,7 +1,6 @@
 import Cocoa
 import ServiceManagement
 
-/// Observable so the settings window and the menu bar both react to either one.
 final class Prefs: ObservableObject {
     static let shared = Prefs()
 
@@ -14,7 +13,6 @@ final class Prefs: ObservableObject {
         }
     }
 
-    /// Finder is enforced in the engine, not stored here.
     @Published var excluded: [String] {
         didSet { d.set(excluded, forKey: "excluded") }
     }
@@ -30,7 +28,6 @@ final class Prefs: ObservableObject {
     }
 
     init() {
-        // `enabled` defaults to true for a first run, where the key is absent.
         if d.object(forKey: "enabled") == nil { d.set(true, forKey: "enabled") }
         enabled = d.bool(forKey: "enabled")
         // Seeded on first run only, so removing Finder sticks.
@@ -38,6 +35,13 @@ final class Prefs: ObservableObject {
         excluded = d.stringArray(forKey: "excluded") ?? []
         lastQuit = d.string(forKey: "lastQuit") ?? ""
         quitDelay = d.object(forKey: "quitDelay") as? Double ?? 0
+
+        // On by default, seeded once: a menu bar app that silently fails to come back
+        // after a reboot looks broken. Turning it off afterwards sticks.
+        if d.object(forKey: "seededLoginItem") == nil {
+            d.set(true, forKey: "seededLoginItem")
+            try? SMAppService.mainApp.register()
+        }
     }
 
     var version: String {
@@ -72,7 +76,6 @@ final class Prefs: ObservableObject {
 
     // MARK: Display helpers
 
-    /// Falls back to the raw id for an app that is no longer installed.
     func displayName(for bundleId: String) -> String {
         guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
             return bundleId

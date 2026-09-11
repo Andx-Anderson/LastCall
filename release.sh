@@ -4,9 +4,9 @@
 # Signs with Developer ID, notarises with Apple, and staples the ticket, so a
 # downloaded copy opens with no warning and no quarantine dance.
 #
-# Notarisation uses the same App Store Connect API key that ships Vantage — no
-# Apple ID, no password. (That key can notarise but cannot CREATE a Developer ID
-# certificate; only the Account Holder can, which is why the cert was made by hand.)
+# Notarisation uses an App Store Connect API key, so it needs no Apple ID and no
+# password. Note that such a key can notarise but cannot create a Developer ID
+# certificate — only the account holder can do that, in the developer portal.
 
 set -e
 cd "$(dirname "$0")"
@@ -20,7 +20,7 @@ SIGN_ID="${SIGN_ID:-$(security find-identity -v -p codesigning 2>/dev/null \
   | grep "Developer ID Application" | head -1 | sed 's/.*"\(.*\)"/\1/')}"
 : "${SIGN_ID:?no Developer ID Application identity found in the keychain}"
 
-# Set these in your shell (see README). ASC_KEY is the path to the .p8.
+# Set these in your shell (see DESIGN.md). ASC_KEY is the path to the .p8.
 : "${ASC_KEY:?set ASC_KEY to your App Store Connect .p8 key path}"
 : "${ASC_KEY_ID:?set ASC_KEY_ID}"
 : "${ASC_ISSUER:?set ASC_ISSUER}"
