@@ -35,44 +35,9 @@ leaving one open on another Space — so it never quits an app you're still usin
 
 <a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall.dmg"><img src="Icon/download-macos.png" width="240" alt="Download app for macOS"></a>
 
-Once downloaded, open the `.dmg` and move **Last Call** to your `/Applications` folder.
-
-> [!IMPORTANT]
-> There's no Developer ID behind this build yet, so macOS will warn you that Last Call is from an
-> unidentified developer on first launch. This is expected behaviour.
->
-> You'll need to bypass it before the app will open. You only need to do this once. Use one of the
-> methods below.
-
----
-
-**Recommended: Terminal (always works)**
-
-This is the quickest method. It's a single command and works for everyone, including non-admin
-users, which System Settings does not.
-
-After moving Last Call to your Applications folder, run:
-
-```sh
-xattr -dr com.apple.quarantine /Applications/LastCall.app
-```
-
-Then open the app normally.
-
----
-
-**Alternative: System Settings**
-
-> [!NOTE]
-> This method doesn't work for all users. If it doesn't work, use the Terminal method above.
-
-1. Try to open the app — you'll see a security warning.
-2. Click **OK** to dismiss it.
-3. Open **System Settings** > **Privacy & Security**.
-4. Scroll to the bottom and click **Open Anyway** next to the Last Call warning.
-5. Confirm if prompted.
-
----
+Open the `.dmg`, drag **Last Call** to your `/Applications` folder, and open it. That's it — the app
+is signed with a Developer ID and notarised by Apple, so there's no security warning and nothing to
+bypass.
 
 ### Or build it yourself
 
@@ -148,10 +113,24 @@ keycode and modifier flags, to test for Cmd+W. Nothing is stored, logged, or sen
 `./build.sh` compiles, bundles, signs and installs to `/Applications`.
 `./test.sh` runs the decision tests — pure logic, so they need no running app and no permission.
 
-> [!WARNING]
-> Ad-hoc signing ties the Accessibility grant to the code hash, so **every rebuild silently voids
-> it** — macOS keeps showing the toggle as enabled while denying the app. `build.sh` resets the grant
-> on each build so you get an honest prompt instead of an app that looks authorised and does nothing.
+`build.sh` signs with whatever **Developer ID Application** identity is in your keychain, and falls
+back to ad-hoc signing if there isn't one.
+
+> [!NOTE]
+> Ad-hoc signing ties the Accessibility grant to the code *hash*, so every rebuild silently voids it
+> — macOS keeps showing the toggle as enabled while denying the app. A Developer ID identity is
+> stable across rebuilds, so the grant survives. If you build ad-hoc, expect to re-tick the box each
+> time, and run `tccutil reset Accessibility com.andxlab.lastcall` to get an honest prompt.
+
+To cut a release, `./release.sh <version>` signs, notarises and staples a `.dmg`. It needs App Store
+Connect credentials in the environment:
+
+```sh
+export ASC_KEY=~/.appstoreconnect/private_keys/AuthKey_XXXXXXXXXX.p8
+export ASC_KEY_ID=XXXXXXXXXX
+export ASC_ISSUER=<issuer-uuid>
+./release.sh 1.2.0
+```
 
 ---
 
