@@ -11,7 +11,8 @@
 set -e
 cd "$(dirname "$0")"
 
-VERSION="${1:?usage: ./release.sh <version>   e.g. ./release.sh 1.1.0}"
+# Version comes from the VERSION file; an argument overrides it.
+VERSION="${1:-$(cat VERSION)}"
 APP="build/LastCall.app"
 # Nothing identifying is hardcoded. The signing identity is read from the
 # keychain; the notarisation credentials come from the environment.

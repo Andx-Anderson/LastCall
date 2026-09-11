@@ -6,8 +6,9 @@
 import Cocoa
 import ApplicationServices
 
-/// Bundle ids never quit, whatever the user configures.
-let hardExcluded: Set<String> = ["com.apple.finder"]
+/// Finder used to be hard-excluded. It is now just a default entry in the user's
+/// exclusion list, because quitting Finder is a legitimate thing to want — macOS
+/// relaunches it — and a tool should not override a deliberate choice.
 
 final class Engine {
     static let shared = Engine()
@@ -66,6 +67,22 @@ final class Engine {
         CFMachPortInvalidate(t)
         tap = nil
         isRunning = false
+    }
+
+    /// The honest answer to "can this app actually do its job right now".
+    ///
+    /// Neither obvious signal works. `AXIsProcessTrusted()` caches inside a running
+    /// process and keeps returning true after the grant is pulled; `CGEvent.tapIsEnabled`
+    /// also still reports true while the tap silently delivers nothing. Measured both,
+    /// 2026-09-11. The only reliable test is to make a real Accessibility call and see
+    /// whether it is refused.
+    var hasPermission: Bool {
+        guard AXIsProcessTrusted() else { return false }
+        var value: CFTypeRef?
+        let err = AXUIElementCopyAttributeValue(systemWide,
+                                                kAXFocusedApplicationAttribute as CFString, &value)
+        // .apiDisabled is the explicit "Accessibility is off for you" answer.
+        return err != .apiDisabled && err != .notImplemented
     }
 
     func refresh() {
@@ -135,16 +152,14 @@ final class Engine {
 
         // Only real, Dock-visible apps. Menu bar agents legitimately run windowless.
         guard app.activationPolicy == .regular else { return }
-        guard !hardExcluded.contains(bundleId), !Prefs.shared.excluded.contains(bundleId) else { return }
+        guard !Prefs.shared.excluded.contains(bundleId) else { return }
         guard pid != ProcessInfo.processInfo.processIdentifier else { return }
 
         let after = realWindowCount(pid: pid)
         let onScreen = onScreenWindowCount(pid: pid)
 
         if Decision.shouldQuit(before: before, after: after, onScreen: onScreen) {
-            let name = app.localizedName ?? bundleId
-            app.terminate()
-            Prefs.shared.noteQuit(appName: name)
+            quit(app, bundleId: bundleId, windowsAtDecision: after)
             return
         }
         // Not settled — the close may still be animating. Retry a few times, then give
@@ -153,6 +168,26 @@ final class Engine {
         guard next < checkDelays.count else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + checkDelays[next]) { [weak self] in
             self?.consider(pid: pid, before: before, attempt: next)
+        }
+    }
+
+    /// Waits out the user's grace period, then checks once more that the app really
+    /// still has nothing open — reopening a window during the delay cancels the quit,
+    /// which is the entire point of having one.
+    private func quit(_ app: NSRunningApplication, bundleId: String, windowsAtDecision: Int) {
+        let name = app.localizedName ?? bundleId
+        let delay = Prefs.shared.quitDelay
+        guard delay > 0 else {
+            app.terminate()
+            Prefs.shared.noteQuit(appName: name)
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            guard !app.isTerminated else { return }
+            guard self.realWindowCount(pid: app.processIdentifier) <= windowsAtDecision,
+                  self.onScreenWindowCount(pid: app.processIdentifier) == 0 else { return }
+            app.terminate()
+            Prefs.shared.noteQuit(appName: name)
         }
     }
 

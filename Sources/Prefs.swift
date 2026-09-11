@@ -19,6 +19,12 @@ final class Prefs: ObservableObject {
         didSet { d.set(excluded, forKey: "excluded") }
     }
 
+    /// Seconds to wait before quitting, so an accidental close can be undone by
+    /// reopening a window. 0 = instant.
+    @Published var quitDelay: Double {
+        didSet { d.set(quitDelay, forKey: "quitDelay") }
+    }
+
     @Published var lastQuit: String {
         didSet { d.set(lastQuit, forKey: "lastQuit") }
     }
@@ -27,8 +33,16 @@ final class Prefs: ObservableObject {
         // `enabled` defaults to true for a first run, where the key is absent.
         if d.object(forKey: "enabled") == nil { d.set(true, forKey: "enabled") }
         enabled = d.bool(forKey: "enabled")
+        // Seeded on first run only, so removing Finder sticks.
+        if d.object(forKey: "excluded") == nil { d.set(["com.apple.finder"], forKey: "excluded") }
         excluded = d.stringArray(forKey: "excluded") ?? []
         lastQuit = d.string(forKey: "lastQuit") ?? ""
+        quitDelay = d.object(forKey: "quitDelay") as? Double ?? 0
+    }
+
+    var version: String {
+        let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+        return v ?? "—"
     }
 
     func noteQuit(appName: String) {

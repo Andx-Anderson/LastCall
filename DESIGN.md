@@ -77,3 +77,44 @@ Things that produced confident wrong answers:
 
 Assert the window count actually changed before reading anything into a result. A test whose setup
 silently failed looks identical to a passing one.
+
+## Source layout
+
+| File | |
+| :--- | :--- |
+| `Sources/Engine.swift` | Event tap, triggers, window counting |
+| `Sources/Decision.swift` | The quit rule, pure so it can be unit tested |
+| `Sources/Prefs.swift` | Settings and the login item |
+| `Sources/SettingsView.swift` | Settings window |
+| `Sources/AppDelegate.swift` | Menu bar, permission watching |
+| `Icon/mask.swift` | Regenerates the icon from the source art |
+
+## Building and releasing
+
+`./build.sh` compiles, signs and installs to `/Applications`. It signs with whatever **Developer ID
+Application** identity is in your keychain and falls back to ad-hoc signing if there isn't one.
+
+> Ad-hoc signing ties the Accessibility grant to the code *hash*, so every rebuild silently voids it
+> — macOS keeps showing the toggle as enabled while denying the app. A Developer ID identity is
+> stable across rebuilds, so the grant survives. Building ad-hoc, expect to re-tick the box each
+> time, and run `tccutil reset Accessibility com.andxlab.lastcall` to get an honest prompt.
+
+`./release.sh <version>` signs, notarises and staples a `.dmg`. It needs App Store Connect
+credentials in the environment:
+
+```sh
+export ASC_KEY=~/.appstoreconnect/private_keys/AuthKey_XXXXXXXXXX.p8
+export ASC_KEY_ID=XXXXXXXXXX
+export ASC_ISSUER=<issuer-uuid>
+./release.sh 1.3.0
+```
+
+**Sign the disk image before notarising it.** A notarised-but-unsigned `.dmg` staples successfully
+and still fails Gatekeeper with `no usable signature` — every tool reports success and the download
+still warns. The only honest check is to copy the artefact, apply a real quarantine flag, and run
+the assessment a downloader hits:
+
+```sh
+xattr -w com.apple.quarantine "0081;$(printf %x $(date +%s));Safari;" copy.dmg
+spctl -a -vvv -t open --context context:primary-signature copy.dmg   # want: accepted
+```

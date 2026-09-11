@@ -31,15 +31,60 @@ leaving one open on another Space — so it never quits an app you're still usin
 
 ## Install
 
-### Download
+<div align="center">
 
-<a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall.dmg"><img src="Icon/download-macos.png" width="240" alt="Download app for macOS"></a>
+<a href="https://github.com/Andx-Anderson/LastCall/releases/latest/download/LastCall.dmg"><img src="Icon/download-macos.png" width="200" alt="Download app for macOS"></a>
 
-Open the `.dmg`, drag **Last Call** to your `/Applications` folder, and open it. That's it — the app
-is signed with a Developer ID and notarised by Apple, so there's no security warning and nothing to
-bypass.
+</div>
 
-### Or build it yourself
+Open the `.dmg`, drag **Last Call** to your `/Applications` folder, and open it. Signed and notarised
+by Apple, so there's no security warning and nothing to bypass.
+
+> [!IMPORTANT]
+> Last Call needs **Accessibility** permission and will ask on first launch. It cannot see which
+> window you clicked without it, so nothing quits until you turn it on.
+>
+> System Settings → Privacy & Security → Accessibility → **Last Call**
+
+---
+
+## Using it
+
+A menu bar icon and one settings window. Apps quit when you close their last window with the **red
+button** or **Cmd+W**.
+
+| Setting | What it does |
+| :--- | :--- |
+| **Quit apps when the last window closes** | The main switch. |
+| **Open at login** | Starts Last Call automatically. Revocable in System Settings → General → Login Items. |
+| **Never quit these apps** | Apps to leave alone. Finder is here by default — remove it if you want Finder to quit too. |
+
+The menu bar icon dims when it's paused or missing permission, and the settings window tells you
+which.
+
+> [!TIP]
+> Last Call leaves an app alone if it still has a window on **another Space** or a **minimized**
+> window. When the answer is ambiguous it does nothing — the only thing it can do is quit something,
+> so it errs toward leaving you alone.
+
+**Tested on** Discord, Spotify, ChatGPT and Safari. Closing a browser *tab* correctly does nothing.
+
+---
+
+## Privacy
+
+Last Call watches for mouse clicks and Cmd+W so it knows when you closed a window. That is the only
+reason it needs Accessibility.
+
+- It **cannot** alter or block your input — the event tap is listen-only.
+- It reads only the key and modifier flags, to check for Cmd+W. It does not see what you type.
+- Nothing is stored, logged, or sent anywhere. There is no network code in the app.
+
+The whole thing is about 600 lines of Swift in [Sources](Sources) if you'd like to check.
+
+---
+
+## Building it yourself
 
 ```sh
 git clone https://github.com/Andx-Anderson/LastCall.git
@@ -47,97 +92,12 @@ cd LastCall
 ./build.sh
 ```
 
-Compiles it, installs it to `/Applications`, and launches it. No quarantine flag to clear, because
-nothing was downloaded.
+Compiles, signs and installs to `/Applications`. `./test.sh` runs the tests.
 
-### Then grant permission
-
-> [!IMPORTANT]
-> Last Call needs **Accessibility** permission, and prompts you on first launch. It cannot see which
-> window you clicked without it, so nothing works until you tick the box.
->
-> System Settings → Privacy & Security → Accessibility → **Last Call**
+How it decides what to quit, why Discord needs special handling, and two designs that failed before
+this one: **[DESIGN.md](DESIGN.md)**.
 
 ---
-
-## Use
-
-A menu bar icon and one settings window. Apps quit when you close the last window with the **red
-button** or **Cmd+W**.
-
-| Setting | What it does |
-| :--- | :--- |
-| **Quit apps when the last window closes** | The main switch. |
-| **Open at login** | A real Login Item, revocable in System Settings → General → Login Items. |
-| **Never quit these apps** | Add any app with `+`. Finder is always excluded. |
-
-The menu bar icon dims when it's paused or when permission is missing.
-
-> [!TIP]
-> It deliberately won't quit an app that still has a window on **another Space**, one whose only
-> remaining window is **minimized**, or **Finder**. When the answer is ambiguous it leaves the app
-> alone — the only thing it can do is quit something, so it errs toward doing nothing.
-
-### Tested
-
-| App | |
-| :--- | :--- |
-| Discord | quits — hides its window instead of closing it, the case other tools miss |
-| Spotify | quits — slow close animation, handled by re-checking |
-| ChatGPT | quits |
-| Safari | quits on the last window; closing a **tab** correctly does nothing |
-| Finder | never quit, by design |
-
-Apps with a window on another Space, or with a minimized window left, are left running.
-
----
-
-## Privacy
-
-The event tap is **listen-only** and cannot alter or block input. The key handler reads only the
-keycode and modifier flags, to test for Cmd+W. Nothing is stored, logged, or sent anywhere.
-
----
-
-## Build
-
-| File | |
-| :--- | :--- |
-| `Sources/Engine.swift` | Event tap, triggers, window counting |
-| `Sources/Decision.swift` | The quit rule, kept pure so it can be tested |
-| `Sources/Prefs.swift` | Settings and the login item |
-| `Sources/SettingsView.swift` | Settings window |
-| `Sources/AppDelegate.swift` | Menu bar |
-| `Icon/mask.swift` | Regenerates the icon from the source art |
-
-`./build.sh` compiles, bundles, signs and installs to `/Applications`.
-`./test.sh` runs the decision tests — pure logic, so they need no running app and no permission.
-
-`build.sh` signs with whatever **Developer ID Application** identity is in your keychain, and falls
-back to ad-hoc signing if there isn't one.
-
-> [!NOTE]
-> Ad-hoc signing ties the Accessibility grant to the code *hash*, so every rebuild silently voids it
-> — macOS keeps showing the toggle as enabled while denying the app. A Developer ID identity is
-> stable across rebuilds, so the grant survives. If you build ad-hoc, expect to re-tick the box each
-> time, and run `tccutil reset Accessibility com.andxlab.lastcall` to get an honest prompt.
-
-To cut a release, `./release.sh <version>` signs, notarises and staples a `.dmg`. It needs App Store
-Connect credentials in the environment:
-
-```sh
-export ASC_KEY=~/.appstoreconnect/private_keys/AuthKey_XXXXXXXXXX.p8
-export ASC_KEY_ID=XXXXXXXXXX
-export ASC_ISSUER=<issuer-uuid>
-./release.sh 1.2.0
-```
-
----
-
-## Notes
-
-Why Discord needs different handling, and two designs that failed before this one:
-**[DESIGN.md](DESIGN.md)**.
 
 ## License
 

@@ -10,6 +10,7 @@ set -e
 cd "$(dirname "$0")"
 
 APP_ID="com.andxlab.lastcall"
+VERSION="$(cat VERSION)"   # single source of truth
 # Auto-detected from the keychain so no identity is hardcoded here. Override with
 # SIGN_ID=... if you have more than one. Falls back to ad-hoc signing.
 SIGN_ID="${SIGN_ID:-$(security find-identity -v -p codesigning 2>/dev/null \
@@ -36,8 +37,8 @@ cat > "$STAGE/Contents/Info.plist" <<PLIST
     <key>CFBundleExecutable</key><string>LastCall</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>1.0</string>
-    <key>CFBundleVersion</key><string>1</string>
+    <key>CFBundleShortVersionString</key><string>${VERSION}</string>
+    <key>CFBundleVersion</key><string>${VERSION}</string>
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>LSUIElement</key><true/>
     <key>NSHumanReadableCopyright</key><string>MIT</string>

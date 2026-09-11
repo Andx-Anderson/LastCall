@@ -20,10 +20,45 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         Engine.shared.refresh()
 
-        // Pick up the grant live rather than making the user relaunch.
+        wasTrusted = Engine.shared.hasPermission
+
+        // Picks the grant up live rather than making the user relaunch, and catches
+        // it being taken away again.
         trustTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
             Engine.shared.refresh()
+            self?.checkPermissionLoss()
             self?.updateStatusItem()
+        }
+    }
+
+    /// Revoking Accessibility does not stop the app or say anything, it just makes it
+    /// silently useless — which is the exact failure this app was written to avoid
+    /// being on the receiving end of. So say so, once, the moment it happens.
+    private var wasTrusted = false
+
+    private func checkPermissionLoss() {
+        // Trust the tap, not AXIsProcessTrusted(). If we were running and the tap has
+        // gone dead without us stopping it, the grant was taken away.
+        let now = Engine.shared.hasPermission
+        defer { wasTrusted = now }
+        guard wasTrusted, !now else { return }
+
+        Engine.shared.stop()
+
+        showSettings(nil)
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "Last Call has stopped working"
+        alert.informativeText = """
+            Its Accessibility permission was turned off, so it can no longer see which \
+            window you clicked. Closing a window will not quit anything until you turn \
+            it back on.
+            """
+        alert.addButton(withTitle: "Open Settings")
+        alert.addButton(withTitle: "Later")
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSWorkspace.shared.open(URL(string:
+                "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
         }
     }
 
@@ -75,7 +110,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var lastMenuState: String = ""
 
     private func updateStatusItem() {
-        let trusted = AXIsProcessTrusted()
+        let trusted = Engine.shared.hasPermission
         statusItem.button?.appearsDisabled = !(Prefs.shared.enabled && trusted)
         let state = "\(Prefs.shared.enabled)|\(trusted)|\(Prefs.shared.lastQuit)"
         guard state != lastMenuState else { return }

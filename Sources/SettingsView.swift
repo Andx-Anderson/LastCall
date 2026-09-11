@@ -4,10 +4,11 @@ import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @ObservedObject var prefs = Prefs.shared
-    @State private var trusted = AXIsProcessTrusted()
+    @State private var trusted = Engine.shared.hasPermission
     @State private var selection: String?
 
-    /// So the row flips to Granted without reopening this window.
+    /// So the permission row updates the moment it changes in System Settings,
+    /// in either direction, without reopening this window.
     private let trustTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -16,16 +17,16 @@ struct SettingsView: View {
             Divider()
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    if !trusted { permissionBanner }
+                    permissionRow
                     behaviourSection
                     exclusionSection
                 }
                 .padding(18)
             }
         }
-        .frame(width: 440, height: 470)
+        .frame(width: 440, height: 490)
         .onReceive(trustTimer) { _ in
-            let now = AXIsProcessTrusted()
+            let now = Engine.shared.hasPermission
             if now != trusted { trusted = now }
         }
     }
@@ -38,7 +39,10 @@ struct SettingsView: View {
                 Image(nsImage: icon).resizable().frame(width: 44, height: 44)
             }
             VStack(alignment: .leading, spacing: 2) {
-                Text("Last Call").font(.system(size: 15, weight: .semibold))
+                HStack(spacing: 6) {
+                    Text("Last Call").font(.system(size: 15, weight: .semibold))
+                    Text(prefs.version).font(.system(size: 11)).foregroundStyle(.tertiary)
+                }
                 Text(statusLine).font(.system(size: 11)).foregroundStyle(.secondary)
             }
             Spacer()
@@ -48,22 +52,33 @@ struct SettingsView: View {
     }
 
     private var statusLine: String {
-        if !trusted { return "Needs Accessibility permission" }
+        if !trusted { return "Not working — needs permission" }
         if !prefs.enabled { return "Paused" }
         if !prefs.lastQuit.isEmpty { return prefs.lastQuit }
         return "Watching for window closes"
     }
 
     // MARK: Permission
+    //
+    // Shown in both states, not just when missing. A row that appears only on failure
+    // gives you no way to tell "granted" from "the app forgot to check".
 
-    private var permissionBanner: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.orange)
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Accessibility permission required").font(.system(size: 12, weight: .medium))
-                Text("Last Call needs it to see which window you clicked. It cannot do anything until this is on.")
-                    .font(.system(size: 11)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+    private var permissionRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: trusted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                    .foregroundStyle(trusted ? Color.green : Color.orange)
+                Text("Accessibility access")
+                Spacer()
+                Text(trusted ? "Granted" : "Not granted")
+                    .font(.system(size: 11))
+                    .foregroundStyle(trusted ? .secondary : Color.orange)
+            }
+
+            if !trusted {
+                Text("Last Call cannot see which window you clicked, so nothing will quit until this is on.")
+                    .font(.system(size: 11)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Button("Open Accessibility Settings") {
                     NSWorkspace.shared.open(URL(string:
                         "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
@@ -73,23 +88,36 @@ struct SettingsView: View {
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color.orange.opacity(0.10)))
+        .background(RoundedRectangle(cornerRadius: 8)
+            .fill(trusted ? Color.secondary.opacity(0.08) : Color.orange.opacity(0.12)))
     }
 
     // MARK: Behaviour
 
     private var behaviourSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             Toggle("Quit apps when the last window closes", isOn: $prefs.enabled)
-                .disabled(!trusted)
             Toggle("Open at login", isOn: Binding(
                 get: { prefs.openAtLogin },
                 set: { prefs.openAtLogin = $0 }
             ))
-            Text("Clicking the red button closes the window and quits the app, the way Windows does.")
-                .font(.system(size: 11)).foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Quit delay")
+                    Spacer()
+                    Text(delayLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+                }
+                Slider(value: $prefs.quitDelay, in: 0...5, step: 0.5)
+                Text("Reopen a window during the delay and the app is left alone.")
+                    .font(.system(size: 11)).foregroundStyle(.tertiary)
+            }
+            .disabled(!prefs.enabled)
         }
+    }
+
+    private var delayLabel: String {
+        prefs.quitDelay == 0 ? "Instant" : String(format: "%.1fs", prefs.quitDelay)
     }
 
     // MARK: Exclusions
@@ -99,15 +127,6 @@ struct SettingsView: View {
             Text("Never quit these apps").font(.system(size: 12, weight: .medium))
 
             List(selection: $selection) {
-                HStack(spacing: 8) {
-                    Image(nsImage: NSWorkspace.shared.icon(forFile: "/System/Library/CoreServices/Finder.app"))
-                        .resizable().frame(width: 16, height: 16)
-                    Text("Finder")
-                    Spacer()
-                    Text("always").font(.system(size: 10)).foregroundStyle(.tertiary)
-                }
-                .selectionDisabled()
-
                 ForEach(prefs.excluded, id: \.self) { id in
                     HStack(spacing: 8) {
                         if let icon = prefs.icon(for: id) {
@@ -127,6 +146,9 @@ struct SettingsView: View {
                 Button { removeSelected() } label: { Image(systemName: "minus") }
                     .disabled(selection == nil)
                 Spacer()
+                if prefs.excluded.isEmpty {
+                    Text("Nothing excluded").font(.system(size: 10)).foregroundStyle(.tertiary)
+                }
             }
             .buttonStyle(.bordered)
             .controlSize(.small)
