@@ -73,6 +73,13 @@ echo "==> creating $DMG"
 if [ -f "$DMG" ]; then mv "$DMG" "$HOME/.Trash/$(basename "$DMG").$(date +%s)"; fi
 hdiutil create -volname "Last Call" -srcfolder "$DMG_DIR" -ov -format UDZO "$DMG" >/dev/null
 
+# The disk image must be SIGNED before it is notarised. A notarised-but-unsigned
+# dmg staples fine and still fails Gatekeeper with "no usable signature" — the app
+# inside is fine, but the image itself warns on open.
+echo "==> signing the disk image"
+codesign --force --sign "$SIGN_ID" --timestamp "$DMG"
+codesign -v "$DMG"
+
 echo "==> notarising the disk image"
 xcrun notarytool submit "$DMG" \
   --key "$ASC_KEY" --key-id "$ASC_KEY_ID" --issuer "$ASC_ISSUER" --wait
