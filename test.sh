@@ -4,5 +4,5 @@
 set -e
 cd "$(dirname "$0")"
 mkdir -p build   # gitignored, so it does not exist on a fresh clone
-swiftc -O -o build/decision-tests Sources/Decision.swift Tests/DecisionTests.swift
+swiftc -O -o build/decision-tests Sources/Decision.swift Sources/Version.swift Tests/DecisionTests.swift
 ./build/decision-tests

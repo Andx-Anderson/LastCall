@@ -113,6 +113,13 @@ struct SettingsView: View {
                     .font(.system(size: 11)).foregroundStyle(.tertiary)
             }
             .disabled(!prefs.enabled)
+
+            Divider().padding(.vertical, 2)
+
+            Toggle("Check for updates", isOn: $prefs.checkForUpdates)
+            Text("Asks GitHub once a day whether a newer version exists. Nothing about you is sent.")
+                .font(.system(size: 11)).foregroundStyle(.tertiary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

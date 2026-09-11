@@ -23,6 +23,14 @@ final class Prefs: ObservableObject {
         didSet { d.set(quitDelay, forKey: "quitDelay") }
     }
 
+    /// Gates the only network request Last Call ever makes.
+    @Published var checkForUpdates: Bool {
+        didSet {
+            d.set(checkForUpdates, forKey: "checkForUpdates")
+            checkForUpdates ? UpdateCheck.shared.start() : UpdateCheck.shared.stop()
+        }
+    }
+
     @Published var lastQuit: String {
         didSet { d.set(lastQuit, forKey: "lastQuit") }
     }
@@ -35,6 +43,7 @@ final class Prefs: ObservableObject {
         excluded = d.stringArray(forKey: "excluded") ?? []
         lastQuit = d.string(forKey: "lastQuit") ?? ""
         quitDelay = d.object(forKey: "quitDelay") as? Double ?? 0
+        checkForUpdates = d.object(forKey: "checkForUpdates") as? Bool ?? true
 
         // On by default, seeded once: a menu bar app that silently fails to come back
         // after a reboot looks broken. Turning it off afterwards sticks.

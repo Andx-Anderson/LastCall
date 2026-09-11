@@ -19,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         Engine.shared.refresh()
+        if Prefs.shared.checkForUpdates { UpdateCheck.shared.start() }
 
         wasTrusted = Engine.shared.hasPermission
 
@@ -89,6 +90,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(info)
         }
 
+        if let newVersion = UpdateCheck.shared.availableVersion {
+            menu.addItem(.separator())
+            let update = NSMenuItem(title: "Update available — \(newVersion)",
+                                    action: #selector(openReleases), keyEquivalent: "")
+            update.target = self
+            menu.addItem(update)
+        }
+
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(showSettings(_:)), keyEquivalent: ",")
@@ -110,6 +119,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let trusted = Engine.shared.hasPermission
         statusItem.button?.appearsDisabled = !(Prefs.shared.enabled && trusted)
         let state = "\(Prefs.shared.enabled)|\(trusted)|\(Prefs.shared.lastQuit)"
+            + "|\(UpdateCheck.shared.availableVersion ?? "")"
         guard state != lastMenuState else { return }
         lastMenuState = state
         rebuildMenu()
@@ -136,6 +146,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    @objc private func openReleases() {
+        NSWorkspace.shared.open(UpdateCheck.releasesPage)
     }
 
     @objc private func quit() {

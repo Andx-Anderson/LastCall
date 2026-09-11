@@ -66,8 +66,25 @@ struct TestRunner {
             if !ok { failed += 1 }
             print("[\(ok ? "pass" : "FAIL")] \(c.name)  (before=\(c.before) after=\(c.after) onScreen=\(c.onScreen)) -> \(got)")
         }
+        // Version comparison, used to decide whether an update exists
+        let versionCases: [(String, String, Bool)] = [
+            ("1.4.0", "1.3.1", true),
+            ("1.3.1", "1.3.1", false),
+            ("1.3.0", "1.3.1", false),
+            ("1.10.0", "1.9.0", true),    // not a string comparison
+            ("2.0", "1.9.9", true),
+            ("1.3", "1.3.0", false),
+            ("1.3.2", "1.3", true),
+        ]
+        for (cand, cur, want) in versionCases {
+            let got = Version.isNewer(cand, than: cur)
+            if got != want { failed += 1 }
+            print("[\(got == want ? "pass" : "FAIL")] version \(cand) newer than \(cur) -> \(got)")
+        }
+
         print("")
-        print(failed == 0 ? "\(cases.count) passed" : "\(failed) of \(cases.count) FAILED")
+        let total = cases.count + versionCases.count
+        print(failed == 0 ? "\(total) passed" : "\(failed) of \(total) FAILED")
         exit(failed == 0 ? 0 : 1)
     }
 }

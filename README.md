@@ -58,6 +58,7 @@ button** or **Cmd+W**.
 | **Quit apps when the last window closes** | The main switch. |
 | **Open at login** | On by default, so it still works after a reboot. Revocable in System Settings → General → Login Items. |
 | **Quit delay** | A grace period before quitting, up to 5s. Reopen a window during it and the app is left alone. Instant by default. |
+| **Check for updates** | Asks GitHub once a day whether a newer version exists. On by default. |
 | **Never quit these apps** | Apps to leave alone. Finder is here by default — remove it if you want Finder to quit too. |
 
 The menu bar icon dims when it's paused or missing permission, and the settings window tells you
@@ -79,9 +80,13 @@ reason it needs Accessibility.
 
 - It **cannot** alter or block your input — the event tap is listen-only.
 - It reads only the key and modifier flags, to check for Cmd+W. It does not see what you type.
-- Nothing is stored, logged, or sent anywhere. There is no network code in the app.
+- Nothing you do is stored, logged, or transmitted.
 
-The whole thing is about 600 lines of Swift in [Sources](Sources) if you'd like to check.
+It makes exactly one network request: once a day it asks GitHub's public releases API whether a
+newer version exists, so it can show you an "Update available" item. Nothing about you is sent, and
+you can turn it off in Settings.
+
+The whole thing is about 650 lines of Swift in [Sources](Sources) if you'd like to check.
 
 ---
 
