@@ -149,9 +149,17 @@ struct SettingsView: View {
             .border(Color.secondary.opacity(0.2))
 
             HStack(spacing: 6) {
-                Button { addApp() } label: { Image(systemName: "plus") }
-                Button { removeSelected() } label: { Image(systemName: "minus") }
-                    .disabled(selection == nil)
+                // Both glyphs get the same box because they are not the same size.
+                // Measured: SF Symbol "plus" is 14x13, "minus" is 14x4. A bordered
+                // button hugs its label, so without this the minus button renders
+                // visibly shorter than the plus one. Do not "simplify" these away.
+                Button { addApp() } label: {
+                    Image(systemName: "plus").frame(width: 14, height: 13)
+                }
+                Button { removeSelected() } label: {
+                    Image(systemName: "minus").frame(width: 14, height: 13)
+                }
+                .disabled(selection == nil)
                 Spacer()
                 if prefs.excluded.isEmpty {
                     Text("Nothing excluded").font(.system(size: 10)).foregroundStyle(.tertiary)

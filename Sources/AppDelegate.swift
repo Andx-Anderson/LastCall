@@ -134,12 +134,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func showSettings(_ sender: Any?) {
         if settingsWindow == nil {
-            let window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 440, height: 470),
-                styleMask: [.titled, .closable],
-                backing: .buffered, defer: false)
+            // SettingsView states its own size and the window adopts it. Hardcoding it
+            // here too had already drifted (470 against the view's 490): assigning
+            // contentView resizes the host to the window, but the SwiftUI root keeps
+            // its fixed frame, so it overhung 10pt top and bottom. NSHostingView does
+            // not clip, so that overhang painted over the window's rounded corners and
+            // squared them off, and cut the buttons below the exclusions list.
+            let hosting = NSHostingView(rootView: SettingsView())
+            let window = NSWindow(contentRect: .zero,
+                                  styleMask: [.titled, .closable],
+                                  backing: .buffered, defer: false)
             window.title = "Last Call"
-            window.contentView = NSHostingView(rootView: SettingsView())
+            window.contentView = hosting
+            window.setContentSize(hosting.fittingSize)
             window.isReleasedWhenClosed = false
             window.center()
             settingsWindow = window
