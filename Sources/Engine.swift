@@ -112,7 +112,8 @@ final class Engine {
     }
 
     private func schedule(pid: pid_t) {
-        let before = realWindowCount(pid: pid)
+        // No baseline, no reasoning — the same stance as the `before == 0` guard.
+        guard let before = realWindowCount(pid: pid) else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + checkDelays[0]) { [weak self] in
             self?.consider(pid: pid, before: before, attempt: 0)
         }
@@ -145,15 +146,16 @@ final class Engine {
         guard !Prefs.shared.excluded.contains(bundleId) else { return }
         guard pid != ProcessInfo.processInfo.processIdentifier else { return }
 
-        let after = realWindowCount(pid: pid)
-        let onScreen = onScreenWindowCount(pid: pid)
-
-        if Decision.shouldQuit(before: before, after: after, onScreen: onScreen) {
+        // Either read failing falls through to the retry below rather than being
+        // decided on. An unanswered app is not an app without windows.
+        if let after = realWindowCount(pid: pid),
+           let onScreen = onScreenWindowCount(pid: pid),
+           Decision.shouldQuit(before: before, after: after, onScreen: onScreen) {
             quit(app, bundleId: bundleId, windowsAtDecision: after)
             return
         }
-        // Not settled — the close may still be animating. Retry a few times, then give
-        // up and leave the app alone.
+        // Not settled — the close may still be animating, or the app is too busy to
+        // answer. Retry a few times, then give up and leave the app alone.
         let next = attempt + 1
         guard next < checkDelays.count else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + checkDelays[next]) { [weak self] in
@@ -173,8 +175,12 @@ final class Engine {
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
             guard !app.isTerminated else { return }
-            guard self.realWindowCount(pid: app.processIdentifier) <= windowsAtDecision,
-                  self.onScreenWindowCount(pid: app.processIdentifier) == 0 else { return }
+            // Both reads must succeed. Previously a failed count came back as 0 and
+            // `0 <= windowsAtDecision` waved the quit through, so the safety net had
+            // the very hole it was meant to catch.
+            guard let now = self.realWindowCount(pid: app.processIdentifier),
+                  let visible = self.onScreenWindowCount(pid: app.processIdentifier),
+                  now <= windowsAtDecision, visible == 0 else { return }
             app.terminate()
             Prefs.shared.noteQuit(appName: name)
         }
@@ -182,12 +188,19 @@ final class Engine {
 
     // MARK: Window inspection
 
-    /// Windows in the AX list, across every Space.
-    private func realWindowCount(pid: pid_t) -> Int {
+    /// Windows in the AX list, across every Space. `nil` means the question could not
+    /// be answered: the app did not reply inside `axTimeout`, or the element is gone.
+    ///
+    /// Reporting a failed query as 0 made "no answer" and "no windows" the same value.
+    /// That is not what quit Chrome with a window still open — there the query
+    /// SUCCEEDED and handed back an empty list, see DESIGN.md — but it is the same hole
+    /// one step earlier, and the re-check in `quit()` had it too. A failure is not an
+    /// observation.
+    private func realWindowCount(pid: pid_t) -> Int? {
         var value: CFTypeRef?
         guard AXUIElementCopyAttributeValue(appElement(pid),
                                            kAXWindowsAttribute as CFString, &value) == .success,
-              let windows = value as? [AXUIElement] else { return 0 }
+              let windows = value as? [AXUIElement] else { return nil }
         return windows.filter { isRealWindow($0) }.count
     }
 
@@ -201,11 +214,13 @@ final class Engine {
         return size.width >= minWindowSide && size.height >= minWindowSide
     }
 
-    /// Only used to detect hide-instead-of-destroy. Never to judge other windows —
-    /// an off-Space window also reads as not on screen.
-    private func onScreenWindowCount(pid: pid_t) -> Int {
+    /// Detects hide-instead-of-destroy, and vetoes a quit while anything is visible.
+    /// Never used to judge another window as gone — an off-Space window also reads as
+    /// not on screen. `nil` means the window server did not answer; as above, that is
+    /// not an observation of emptiness.
+    private func onScreenWindowCount(pid: pid_t) -> Int? {
         guard let list = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]] else {
-            return 0
+            return nil
         }
         var count = 0
         for w in list {

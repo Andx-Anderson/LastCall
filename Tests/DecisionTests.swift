@@ -54,6 +54,32 @@ let cases: [Case] = [
     // A new window appearing must never be read as a close
     Case(name: "a window opened instead of closing",
          before: 1, after: 2, onScreen: 2, expect: false),
+
+    // Regression: closing one of two Chrome profile windows quit the whole browser.
+    // Chrome stops answering AX while it tears a window down, the failed read was
+    // reported as "no windows", and the `after < before` branch never looked at the
+    // window still sitting on screen. Engine now abstains rather than passing a failed
+    // read in at all; these cases pin the second line of defence.
+    // The exact values measured on macOS 27.0 with two Chrome profile windows:
+    // AX returned .success with an empty window list for ~500ms while the window
+    // server was still compositing both windows.
+    Case(name: "measured: Chrome AX empties while two profile windows are up",
+         before: 2, after: 0, onScreen: 2, expect: false),
+    Case(name: "count reads low but a window is plainly on screen",
+         before: 2, after: 0, onScreen: 1, expect: false),
+    Case(name: "count reads low with several windows still on screen",
+         before: 3, after: 0, onScreen: 2, expect: false),
+    Case(name: "last window destroyed but something is still composited",
+         before: 1, after: 0, onScreen: 1, expect: false),
+
+    // A hidden window and a window on another Space both read as not on screen, so
+    // the veto stays out of the way and the counts still refuse.
+    Case(name: "hidden window plus one on another Space",
+         before: 2, after: 2, onScreen: 0, expect: false),
+
+    // The veto must not swallow the case the app exists for.
+    Case(name: "veto does not block a real quit: every window gone",
+         before: 3, after: 0, onScreen: 0, expect: true),
 ]
 
 @main
